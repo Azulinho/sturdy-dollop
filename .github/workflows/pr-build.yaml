@@ -108,10 +108,8 @@ jobs:
       - name: prep emoji
         if: ${{ always() }}
         id: emoji
-        env:
-          RC: ${{ steps.terragrunt-plan.outcome }}
         run: |
-          if [ $RC = 'success']; then
+          if [ "${{ steps.terragrunt-plan.outcome }}" = "success"]; then
             echo "::set-output name=emoji::rocket"
           else
             echo "::set-output name=emoji::-1"
