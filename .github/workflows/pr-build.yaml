@@ -55,6 +55,7 @@ jobs:
       - name: run terragrunt plan
         id: terragrunt-plan
         run: |
+          set -o pipefail
           echo "matrix is: ${{ needs.build-matrix.outputs.matrix }}"
           echo "my job is: ${{ matrix.tf_config }}"
           if ( echo "${{ matrix.tf_config }}" | grep namespace ); then
@@ -87,7 +88,6 @@ jobs:
             OUTPUT="${OUTPUT//$'\r'/'%0D'}"
 
             echo "::set-output name=content::$OUTPUT"
-            set -x
             exit $(( $rc1 + $rc2 ))
           fi
 
