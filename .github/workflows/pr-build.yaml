@@ -70,7 +70,7 @@ jobs:
             export AWS_SECRET_ACCESS_KEY=`echo $AWS_ACCOUNT_NAME | cut -f2 -d ":"  `
 
             terragrunt init -no-color 2>&1 | tee log.txt
-            terragrunt plan -no-color 2>&1 | tee -A log.txt
+            terragrunt plan -no-color 2>&1 | tee -a log.txt
 
             OUTPUT=$(cat log.txt)
             OUTPUT="${OUTPUT//'%'/'%25'}"
