@@ -105,6 +105,18 @@ jobs:
             exit $rc
           fi
 
+      - name: prep emoji
+        if: ${{ always() }}
+        id: emoji
+        env:
+          RC: ${{ steps.terragrunt-plan.outcome }}
+        run: |
+          if [ $RC = 'success']; then
+            echo "::set-output name=emoji::rocket"
+          else
+            echo "::set-output name=emoji::-1"
+          fi
+
       - name: Create comment on PR
         if: ${{ always() }}
         id: comment
@@ -113,4 +125,4 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ${{join(steps.terragrunt-plan.outputs.*, '\n')}}
-          reactions: rocket
+          reactions: ${{ steps.emoji.outputs.emoji }}
