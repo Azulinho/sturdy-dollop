@@ -55,10 +55,10 @@ jobs:
       - name: run terragrunt plan
         id: terragrunt-plan
         run: |
-          set -o pipefail
+          set -o pipefail +e
           echo "matrix is: ${{ needs.build-matrix.outputs.matrix }}"
           echo "my job is: ${{ matrix.tf_config }}"
-          if ( echo "${{ matrix.tf_config }}" | grep namespace ); then
+          if ( echo "${{ matrix.tf_config }}" | grep "aws/" ); then
             cd ${{ matrix.tf_config }}
 
             # find out the account we need to update
@@ -70,16 +70,30 @@ jobs:
             export AWS_SECRET_ACCESS_KEY=`echo $AWS_ACCOUNT_NAME | cut -f2 -d ":"  `
             export TFENV_NO_COLOR=true
 
-            tgenv install
-            tfenv install
-
             echo "# OUTPUT FOR JOB: ${{matrix.tf_config}}" > log.txt
             echo >> log.txt
             echo >> log.txt
-            terragrunt init -no-color 2>&1 | tee -a log.txt
-            rc1=$?
-            terragrunt plan -no-color 2>&1 | tee -a log.txt
-            rc2=$?
+
+            # we disabled -e , so that we can fail and still collect the output
+            # from all failed actions
+            let rc=0
+            tgenv install 2>&1 | tee -a log.txt
+            let rc=$rc+$?
+
+            if [ $rc -lt 1 ]; then
+              tfenv install 2>&1 | tee -a log.txt
+              let rc=$rc+$?
+            fi
+
+            if [ $rc -lt 1 ]; then
+              terragrunt init -no-color 2>&1 | tee -a log.txt
+              let rc=$rc+$?
+            fi
+
+            if [ $rc -lt 1 ]; then
+              terragrunt plan -no-color 2>&1 | tee -a log.txt
+              let rc=$rc+$?
+            fi
 
             # https://github.community/t/set-output-truncates-multiline-strings/16852/6
             OUTPUT=$(cat log.txt)
@@ -88,7 +102,7 @@ jobs:
             OUTPUT="${OUTPUT//$'\r'/'%0D'}"
 
             echo "::set-output name=content::$OUTPUT"
-            exit $(( $rc1 + $rc2 ))
+            exit $rc
           fi
 
       - name: Create comment on PR
