@@ -114,7 +114,3 @@ jobs:
           body: |
             ${{join(steps.terragrunt-plan.outputs.*, '\n')}}
           reactions: rocket
-
-      - name: Raise Error on previous failures
-        if: steps.terragrunt-plan.outcome != 'success' || steps.comment.outcome != 'success'
-        run: exit 1
