@@ -69,8 +69,15 @@ jobs:
             export AWS_ACCESS_KEY_ID=`echo $AWS_ACCOUNT_NAME | cut -f1 -d ":"  `
             export AWS_SECRET_ACCESS_KEY=`echo $AWS_ACCOUNT_NAME | cut -f2 -d ":"  `
 
-            echo "::set-output name=terragrunt-init::`terragrunt init -no-color `\n"
-            echo "::set-output name=terragrunt-plan::`terragrunt plan -no-color `\n"
+            terragrunt init -no-color 2>&1 | tee log.txt
+            terragrunt plan -no-color 2>&1 | tee -A log.txt
+
+            OUTPUT=$(cat log.txt)
+            OUTPUT="${OUTPUT//'%'/'%25'}"
+            OUTPUT="${OUTPUT//$'\n'/'%0A'}"
+            OUTPUT="${OUTPUT//$'\r'/'%0D'}"
+
+            echo "::set-output name=content::$OUTPUT"
           fi
 
       - name: Create comment
