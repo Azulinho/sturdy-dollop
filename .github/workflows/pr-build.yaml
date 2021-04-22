@@ -72,7 +72,7 @@ jobs:
             tgenv install
             tfenv install
 
-            echo "OUTPUT FOR JOB: ${matrix.tf_config}\n\n" > log.txt
+            echo "OUTPUT FOR JOB: ${{matrix.tf_config}}\n\n" > log.txt
             terragrunt init -no-color 2>&1 | tee -a log.txt
             terragrunt plan -no-color 2>&1 | tee -a log.txt
 
