@@ -75,9 +75,10 @@ jobs:
             echo "# OUTPUT FOR JOB: ${{matrix.tf_config}}" > log.txt
             echo >> log.txt
             echo >> log.txt
-            (terragrunt init -no-color 2>&1 | tee -a log.txt ) \
-              && (terragrunt plan -no-color 2>&1 | tee -a log.txt)
-            rc=$?
+            terragrunt init -no-color 2>&1 | tee -a log.txt
+            rc1=$?
+            terragrunt plan -no-color 2>&1 | tee -a log.txt
+            rc2=$?
 
             # https://github.community/t/set-output-truncates-multiline-strings/16852/6
             OUTPUT=$(cat log.txt)
@@ -86,7 +87,7 @@ jobs:
             OUTPUT="${OUTPUT//$'\r'/'%0D'}"
 
             echo "::set-output name=content::$OUTPUT"
-            exit $rc
+            exit $(( $rc1 + $rc2 ))
           fi
 
       - name: Create comment on PR
