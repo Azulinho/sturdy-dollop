@@ -69,8 +69,8 @@ jobs:
             export AWS_ACCESS_KEY_ID=`echo $AWS_ACCOUNT_NAME | cut -f1 -d ":"  `
             export AWS_SECRET_ACCESS_KEY=`echo $AWS_ACCOUNT_NAME | cut -f2 -d ":"  `
 
-            echo "::set-output name=terragrunt-init=`terragrunt init`\n"
-            echo "::set-output name=terragrunt-plan=`terragrunt plan`\n"
+            echo "::set-output name=terragrunt-init::`terragrunt init`\n"
+            echo "::set-output name=terragrunt-plan::`terragrunt plan`\n"
           fi
 
       - name: Create comment
