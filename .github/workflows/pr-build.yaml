@@ -52,8 +52,8 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: get parent directory and set matrix
-        id: set-matrix
+      - name: run terragrunt plan
+        id: terragrunt-plan
         run: |
           echo "matrix is: ${{ needs.build-matrix.outputs.matrix }}"
           echo "my job is: ${{ matrix.tf_config }}"
@@ -87,11 +87,16 @@ jobs:
             echo "::set-output name=content::$OUTPUT"
           fi
 
-      - name: Create comment
+      - name: Create comment on PR
         if:  ${{ always() }}
+        id: comment
         uses: peter-evans/create-or-update-comment@v1
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            ${{join(steps.set-matrix.outputs.*, '\n')}}
+            ${{join(steps.terragrunt-plan.outputs.*, '\n')}}
           reactions: rocket
+
+      - name: Check on failures
+        if: steps.terragrunt-plan.outcome != 'success' || steps.comment.outcome != 'success'
+        run: exit 1
