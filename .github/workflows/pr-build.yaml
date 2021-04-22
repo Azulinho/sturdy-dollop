@@ -87,11 +87,12 @@ jobs:
             OUTPUT="${OUTPUT//$'\r'/'%0D'}"
 
             echo "::set-output name=content::$OUTPUT"
+            set -x
             exit $(( $rc1 + $rc2 ))
           fi
 
       - name: Create comment on PR
-        if:  ${{ always() }}
+        if: ${{ always() }}
         id: comment
         uses: peter-evans/create-or-update-comment@v1
         with:
@@ -100,6 +101,6 @@ jobs:
             ${{join(steps.terragrunt-plan.outputs.*, '\n')}}
           reactions: rocket
 
-      - name: Check on failures
+      - name: Raise Error on previous failures
         if: steps.terragrunt-plan.outcome != 'success' || steps.comment.outcome != 'success'
         run: exit 1
