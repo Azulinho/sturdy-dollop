@@ -1,7 +1,9 @@
-name: stuff1
+name: terragrunt apply
 
 on:
   push:
+    branches:
+      - master
 
 jobs:
   build-matrix:

@@ -1,0 +1,73 @@
+name: terragrunt apply
+
+on:
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize]
+
+jobs:
+  build-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: get parent directory and set matrix
+        id: set-matrix
+        run: |
+          git diff --name-only HEAD^ HEAD > files.txt
+          tf_config=''
+
+          while IFS= read -r file
+          do
+            echo "file = $file"
+            parent_dir=$(dirname -- "$file")
+            echo "parent_dir = $parent_dir"
+
+            if [[ -z $tf_config ]]; then
+              tf_config="{\"tf_config\":\"$parent_dir\"}"
+            else
+              tf_config="$tf_config, {\"tf_config\":\"$parent_dir\"}"
+            fi
+          done < files.txt
+
+          tf_config="{\"include\":[$tf_config]}"
+          echo "::set-output name=matrix::$tf_config"
+
+  terragrunt-run:
+    needs: [build-matrix]
+    runs-on: [self-hosted, linux]
+    #container:
+    #  image: azulinho/tg
+      #options: --user 1000
+    strategy:
+      matrix: ${{fromJson(needs.build-matrix.outputs.matrix)}}
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: get parent directory and set matrix
+        id: set-matrix
+        run: |
+          echo "matrix is: ${{ needs.build-matrix.outputs.matrix }}"
+          echo "my job is: ${{ matrix.tf_config }}"
+          if ( echo "${{ matrix.tf_config }}" | grep namespace ); then
+            cd ${{ matrix.tf_config }}
+            tgenv install
+            tfenv install
+            # find out the account we need to update
+            # aws/< account name >/< env >/< tf component >/
+            export AWS_ACCOUNT_NAME=`echo "${{ matrix.tf_config }}" | cut -f2 -d "/" `
+
+            # retrieve the creds from the env
+            export AWS_ACCESS_KEY_ID=`echo $AWS_ACCOUNT_NAME | cut -f1 -d ":"  `
+            export AWS_SECRET_ACCESS_KEY=`echo $AWS_ACCOUNT_NAME | cut -f2 -d ":"  `
+
+            terragrunt init
+            terragrunt plan
+          fi
