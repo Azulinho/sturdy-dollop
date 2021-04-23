@@ -1,4 +1,5 @@
 name: terragrunt apply
+concurrency: master-build
 
 on:
   push:
