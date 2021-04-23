@@ -132,12 +132,8 @@ jobs:
 
       - name: Slack Notification
         if: ${{ failure() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: services1
-          SLACK_COLOR: "red"
-          SLACK_ICON: "https://github.com/rtCamp.png?size=48"
-          SLACK_MESSAGE: 'docker build of terragrunt-github-runner failed'
-          SLACK_TITLE: "github-actions build failed"
-          SLACK_USERNAME: "github-actions"
-          SLACK_WEBHOOK: "${{ secrets.SLACK_WEBHOOK }}"
+        uses: act10ns/slack@v1
+        with:
+          status: ${{ job.status }}
+          steps: ${{ toJson(steps) }}
+          channel: '#services1'
