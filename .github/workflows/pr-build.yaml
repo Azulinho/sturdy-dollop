@@ -132,9 +132,15 @@ jobs:
 
       - name: Slack Notification
         id: slack
-        #if: ${{ failure() }}
-        uses: act10ns/slack@v1
-        with:
-          status: ${{ job.status }}
+        if: ${{ failure() }}
+        uses: bryannice/gitactions-slack-notification@2.0.0
+        env:
+          SLACK_INCOMING_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_COLOR: "red"
+          SLACK_USERNAME: "github-actions"
+          SLACK_TITLE: "docker build failure"
+          SLACK_MESSAGE: "docker build of terragrunt-github-runner failed'"
+          SLACK_CHANNEL: "scratch0"
+
           steps: ${{ toJson(steps) }}
           channel: '#scratch0'
