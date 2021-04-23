@@ -112,13 +112,17 @@ jobs:
             exit $rc
           fi
 
+
+  slack:
+    if: ${{ always() }}
+    needs: [apply]
+    steps:
       - name: Slack Notification
         id: slack
-        if: ${{ always() }}
         uses: act10ns/slack@v1
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         with:
-          status: ${{ job.status }}
-          steps: ${{ toJson(steps) }}
+          status: ${{ needs.apply.job.status }}
+          steps: ${{ toJson(needs.apply.steps) }}
           channel: '#scratch0'
