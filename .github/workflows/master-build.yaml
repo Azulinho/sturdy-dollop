@@ -3,7 +3,7 @@ concurrency: master-build
 
 on:
   push:
-    branches: master
+    branches: main
 
 jobs:
   build-matrix:
