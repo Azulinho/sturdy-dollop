@@ -41,8 +41,12 @@ jobs:
           tf_config="{\"include\":[$tf_config]}"
           echo "::set-output name=matrix::$tf_config"
 
+          dirs="EMPTY$(cat dirs.txt)"
+          echo "::set-output name=dirs::$dirs"
+
 
   plan:
+    if: ${{ ! endsWith(needs.build-matrix.outputs.dirs, 'EMPTY') }}
     needs: [build-matrix]
     runs-on: [self-hosted, linux]
     strategy:
