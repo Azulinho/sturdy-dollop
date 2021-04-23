@@ -26,7 +26,7 @@ jobs:
       - name: set matrix of build jobs
         id: set-matrix
         run: |
-          git diff --name-only HEAD^ HEAD |sort -u > files.txt
+          git diff --name-only HEAD^ HEAD | xargs -i dirname {} | sort -u > files.txt
           tf_config=''
 
           while IFS= read -r file
