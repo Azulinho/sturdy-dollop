@@ -61,6 +61,8 @@ jobs:
 
       - name: run terragrunt plan
         id: terragrunt-plan
+        env:
+          AWS_ACCOUNTS_KEYS: ${{ secrets.AWS_ACCOUNTS_ACCESS_KEYS }}
         run: |
           set -o pipefail +e
           echo "matrix is: ${{ needs.build-matrix.outputs.matrix }}"
@@ -70,11 +72,12 @@ jobs:
 
             # find out the account we need to update
             # aws/< account name >/< env >/< tf component >/
-            export AWS_ACCOUNT_NAME=`echo "${{ matrix.tf_config }}" | cut -f2 -d "/" `
+            export AWS_ACCOUNT_NAME=`echo "${{ matrix.tf_config }}" | cut -f2 -d "/"`
 
             # retrieve the creds from the env
-            export AWS_ACCESS_KEY_ID=`echo $AWS_ACCOUNT_NAME | cut -f1 -d ":"  `
-            export AWS_SECRET_ACCESS_KEY=`echo $AWS_ACCOUNT_NAME | cut -f2 -d ":"  `
+            export AWS_ACCESS_KEY_ID=`echo $AWS_ACCOUNT_KEYS | grep "$AWS_ACCOUNT_NAME" | cut -f2 -d ":"`
+            export AWS_SECRET_ACCESS_KEY=`echo $AWS_ACCOUNT_KEYS | grep "$AWS_ACCOUNT_NAME" | cut -f3 -d ":"`
+            export TGENV_NO_COLOR=true
             export TFENV_NO_COLOR=true
 
             echo "# OUTPUT FOR JOB: ${{matrix.tf_config}}" > log.txt
