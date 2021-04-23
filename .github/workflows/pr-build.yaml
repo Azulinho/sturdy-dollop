@@ -22,7 +22,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            # starting build for commit: ${GITHUB_SHA}
+            # starting build for commit: ${{ github.sha }}
 
       - name: set matrix of build jobs
         id: set-matrix
