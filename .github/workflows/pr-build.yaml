@@ -4,7 +4,6 @@ on:
   pull_request:
     types: [opened, synchronize]
 
-
 jobs:
   build-matrix:
     runs-on: ubuntu-latest
@@ -120,7 +119,6 @@ jobs:
 
             exit $rc
           fi
-
 
       - name: Create comment on PR
         if: ${{ always() }}
