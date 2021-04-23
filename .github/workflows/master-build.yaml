@@ -114,6 +114,7 @@ jobs:
 
 
   slack:
+    if: ${{ always() }}
     needs: [apply]
     runs-on: [self-hosted, linux]
     steps:
