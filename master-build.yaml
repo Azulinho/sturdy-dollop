@@ -1,8 +1,8 @@
-name: terragrunt plan
+name: terragrunt apply
 
 on:
-  pull_request:
-    types: [opened, synchronize]
+  push:
+    branches: master
 
 jobs:
   build-matrix:
@@ -14,14 +14,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 2
-
-      - name: Comment on PR that we running a new build
-        id: comment-on-job-build-start
-        uses: peter-evans/create-or-update-comment@v1
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            # starting build for commit: ${{ github.sha }}
 
       - name: set matrix of build jobs
         id: set-matrix
@@ -46,7 +38,7 @@ jobs:
           echo "::set-output name=matrix::$tf_config"
 
 
-  plan:
+  apply:
     needs: [build-matrix]
     runs-on: [self-hosted, linux]
     strategy:
@@ -58,8 +50,8 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: run terragrunt plan
-        id: terragrunt-plan
+      - name: run terragrunt apply
+        id: terragrunt-apply
         env:
           AWS_ACCOUNTS_KEYS: ${{ secrets.AWS_ACCOUNTS_ACCESS_KEYS }}
         run: |
@@ -99,7 +91,7 @@ jobs:
             fi
 
             if [ $rc -lt 1 ]; then
-              terragrunt plan -no-color 2>&1 | tee -a log.txt
+              terragrunt apply -no-color -auto-approve 2>&1 | tee -a log.txt
               let rc=$?
             fi
 
@@ -120,12 +112,13 @@ jobs:
             exit $rc
           fi
 
-      - name: Create comment on PR
-        if: ${{ always() }}
-        id: comment
-        uses: peter-evans/create-or-update-comment@v1
+      - name: Slack Notification
+        id: slack
+        if: ${{ failure() }}
+        uses: act10ns/slack@v1
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ${{join(steps.terragrunt-plan.outputs.content, '\n')}}
-          reactions: ${{ steps.terragrunt-plan.outputs.emoji }}
+          status: ${{ job.status }}
+          steps: ${{ toJson(steps) }}
+          channel: '#scratch0'
