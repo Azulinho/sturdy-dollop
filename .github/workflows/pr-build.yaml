@@ -131,6 +131,7 @@ jobs:
           reactions: ${{ steps.terragrunt-plan.outputs.emoji }}
 
       - name: Slack Notification
+        id: slack
         if: ${{ failure() }}
         uses: act10ns/slack@v1
         with:
