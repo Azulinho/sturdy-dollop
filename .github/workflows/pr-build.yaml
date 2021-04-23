@@ -26,21 +26,17 @@ jobs:
       - name: set matrix of build jobs
         id: set-matrix
         run: |
-          git diff --name-only HEAD^ HEAD | xargs -i dirname {} | sort -u > files.txt
+          git diff --name-only HEAD^ HEAD | xargs -i dirname {} | sort -u > dirs.txt
           tf_config=''
 
-          while IFS= read -r file
+          while IFS= read -r dir
           do
-            echo "file = $file"
-            parent_dir=$(dirname -- "$file")
-            echo "parent_dir = $parent_dir"
-
             if [[ -z $tf_config ]]; then
-              tf_config="{\"tf_config\":\"$parent_dir\"}"
+              tf_config="{\"tf_config\":\"$dir\"}"
             else
-              tf_config="$tf_config, {\"tf_config\":\"$parent_dir\"}"
+              tf_config="$tf_config, {\"tf_config\":\"$dir\"}"
             fi
-          done < files.txt
+          done < dirs.txt
 
           tf_config="{\"include\":[$tf_config]}"
           echo "::set-output name=matrix::$tf_config"
