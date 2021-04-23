@@ -137,9 +137,9 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_CHANNEL: services1
-          SLACK_COLOR: ${{ job.status }} # or a specific color like 'green' or '#ff00ff'
-          SLACK_ICON: https://github.com/rtCamp.png?size=48
+          SLACK_COLOR: "red"
+          SLACK_ICON: "https://github.com/rtCamp.png?size=48"
           SLACK_MESSAGE: 'docker build of terragrunt-github-runner failed'
-          SLACK_TITLE: github-actions build failed
-          SLACK_USERNAME: rtCamp
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_TITLE: "github-actions build failed"
+          SLACK_USERNAME: "github-actions"
+          SLACK_WEBHOOK: "${{ secrets.SLACK_WEBHOOK }}"
