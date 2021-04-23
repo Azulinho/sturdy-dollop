@@ -76,6 +76,7 @@ jobs:
             export AWS_ACCESS_KEY_ID=`echo $AWS_ACCOUNT_NAME | cut -f1 -d ":"  `
             export AWS_SECRET_ACCESS_KEY=`echo $AWS_ACCOUNT_NAME | cut -f2 -d ":"  `
             export TFENV_NO_COLOR=true
+            export TGENV_NO_COLOR=true
 
             echo "# OUTPUT FOR JOB: ${{matrix.tf_config}}" > log.txt
             echo >> log.txt
