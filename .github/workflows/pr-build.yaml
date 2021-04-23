@@ -46,7 +46,7 @@ jobs:
 
 
   plan:
-    if: ${{ ! endsWith(needs.build-matrix.outputs.dirs, 'EMPTY') }}
+    if: ${{ needs.build-matrix.outputs.dirs == 'EMPTY' }}
     needs: [build-matrix]
     runs-on: [self-hosted, linux]
     strategy:
