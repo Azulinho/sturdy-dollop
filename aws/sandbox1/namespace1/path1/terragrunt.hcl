@@ -5,6 +5,5 @@ terraform {
 }
 
 
-kkkk
 
 inputs = {}
