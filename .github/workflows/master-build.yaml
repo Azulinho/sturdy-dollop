@@ -19,7 +19,7 @@ jobs:
       - name: set matrix of build jobs
         id: set-matrix
         run: |
-          git diff --name-only HEAD^ HEAD | grep \.hcl | xargs -i dirname {} | sort -u > dirs.txt
+          git diff --name-only HEAD^ HEAD | grep \.hcl | xargs -i sh -c "test -e {} && echo {}" | xargs -i dirname {} | sort -u > dirs.txt
           tf_config=''
 
           while IFS= read -r dir
