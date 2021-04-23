@@ -41,9 +41,13 @@ jobs:
           tf_config="{\"include\":[$tf_config]}"
           echo "::set-output name=matrix::$tf_config"
 
+          dirs=`cat dirs.txt`
+          echo "::set-output name=dirs::$dirs"
+
 
   plan:
     needs: [build-matrix]
+    if: needs.build-matrix.outputs.dirs != ""
     runs-on: [self-hosted, linux]
     strategy:
       matrix: ${{fromJson(needs.build-matrix.outputs.matrix)}}
