@@ -112,11 +112,11 @@ jobs:
 
             echo "::set-output name=content::$OUTPUT"
 
-            # if [ $rc -lt 1 ]; then
-            #   echo "::set-output name=emoji::+1"
-            # else
-            #   echo "::set-output name=emoji::-1"
-            # fi
+            if [ $rc -lt 1 ]; then
+              echo "::set-output name=emoji:: "
+            else
+              echo "::set-output name=emoji::-1"
+            fi
 
             exit $rc
           fi
@@ -130,4 +130,4 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ${{join(steps.terragrunt-plan.outputs.content, '\n')}}
-          reaction: ${{ steps.terragrunt-plan.outcome == 'success' && '' || '-1' }}
+          reaction: ${{ steps.terragrunt-plan.outputs.emoji }}
