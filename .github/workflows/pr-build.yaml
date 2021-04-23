@@ -1,5 +1,4 @@
 name: terragrunt apply
-concurrency: 4
 
 on:
   pull_request:
@@ -51,7 +50,6 @@ jobs:
   plan:
     needs: [build-matrix]
     runs-on: [self-hosted, linux]
-    concurrency: 4
     strategy:
       matrix: ${{fromJson(needs.build-matrix.outputs.matrix)}}
       fail-fast: false
