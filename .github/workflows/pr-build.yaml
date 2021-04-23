@@ -2,7 +2,8 @@ name: terragrunt apply
 
 on:
   pull_request:
-    types: [opened, labeled, unlabeled, synchronize]
+    types: [opened, synchronize]
+
 
 jobs:
   build-matrix:
@@ -15,7 +16,15 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: get parent directory and set matrix
+      - name: Comment on PR that we running a new build
+        id: comment-on-job-build-start
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            # starting build for commit: ${GITHUB_SHA}
+
+      - name: set matrix of build jobs
         id: set-matrix
         run: |
           git diff --name-only HEAD^ HEAD > files.txt
@@ -37,12 +46,10 @@ jobs:
           tf_config="{\"include\":[$tf_config]}"
           echo "::set-output name=matrix::$tf_config"
 
+
   terragrunt-run:
     needs: [build-matrix]
     runs-on: [self-hosted, linux]
-    #container:
-    #  image: azulinho/tg
-      #options: --user 1000
     strategy:
       matrix: ${{fromJson(needs.build-matrix.outputs.matrix)}}
       fail-fast: false
@@ -76,23 +83,22 @@ jobs:
 
             # we disabled -e , so that we can fail and still collect the output
             # from all failed actions
-            let rc=0
             tgenv install 2>&1 | tee -a log.txt
             let rc=$rc+$?
 
             if [ $rc -lt 1 ]; then
               tfenv install 2>&1 | tee -a log.txt
-              let rc=$rc+$?
+              let rc=$?
             fi
 
             if [ $rc -lt 1 ]; then
               terragrunt init -no-color 2>&1 | tee -a log.txt
-              let rc=$rc+$?
+              let rc=$?
             fi
 
             if [ $rc -lt 1 ]; then
               terragrunt plan -no-color 2>&1 | tee -a log.txt
-              let rc=$rc+$?
+              let rc=$?
             fi
 
             # https://github.community/t/set-output-truncates-multiline-strings/16852/6
