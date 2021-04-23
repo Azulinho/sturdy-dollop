@@ -34,12 +34,9 @@ jobs:
           tf_config="{\"include\":[$tf_config]}"
           echo "::set-output name=matrix::$tf_config"
 
-          dirs="EMPTY$(cat dirs.txt)"
-          echo "::set-output name=dirs::$dirs"
 
   apply:
     needs: [build-matrix]
-    if: ${{ needs.build-matrix.outputs.dirs != "EMPTY" }}
     runs-on: [self-hosted, linux]
     strategy:
       matrix: ${{fromJson(needs.build-matrix.outputs.matrix)}}
