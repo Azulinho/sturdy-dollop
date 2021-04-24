@@ -195,6 +195,7 @@ jobs:
 
       # notify on the PR that we finished the build for this commit
       - name: Comment on PR that we running a new build
+        if: ${{ always() }} && ${{ github.ref != 'ref/heads/main' }}
         id: comment-on-job-build-end
         uses: peter-evans/create-or-update-comment@v1
         with:
