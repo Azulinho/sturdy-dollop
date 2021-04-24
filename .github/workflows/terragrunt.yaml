@@ -18,6 +18,12 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+
       # ON a PR branch build:
       # notify on the PR that we are starting a new build for this commit
       # each job will be posting the result of the terragrunt plan after
