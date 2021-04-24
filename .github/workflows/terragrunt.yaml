@@ -22,7 +22,7 @@ jobs:
       # each job will be posting the result of the terragrunt plan after
       # this comment.
       - name: Comment on PR that we running a new build
-        if: ${{ github.ref != 'refs/heads/master' }}
+        if: ${{ github.ref != 'refs/heads/main' }}
         id: comment-on-job-build-start
         uses: peter-evans/create-or-update-comment@v1
         with:
@@ -121,9 +121,9 @@ jobs:
               let rc=$?
             fi
 
-            # set the terragrunt action based on if we are on a master build
+            # set the terragrunt action based on if we are on a main build
             # or on a PR build
-            if [ "${{ github.ref }}" == "ref/heads/master"]; then
+            if [ "${{ github.ref }}" == "ref/heads/main"]; then
               ACTION="apply -auto-approve"
             else
               ACTION="plan"
@@ -158,7 +158,7 @@ jobs:
       # ON PR build only:
       # update the PR with the terragrunt plan output
       - name: Create comment on PR
-        if: ${{ always() }} && ${{ github.ref != 'ref/heads/master' }}
+        if: ${{ always() }} && ${{ github.ref != 'ref/heads/main' }}
         id: comment
         uses: peter-evans/create-or-update-comment@v1
         with:
@@ -167,9 +167,9 @@ jobs:
             ${{join(steps.terragrunt.outputs.content, '\n')}}
           reactions: ${{ steps.terragrunt.outputs.emoji }}
 
-      # ON master build only:
+      # ON main build only:
       - name: Slack Notification
-        if: ${{ always() }} && ${{ github.ref == 'ref/heads/master' }}
+        if: ${{ always() }} && ${{ github.ref == 'ref/heads/main' }}
         id: slack
         uses: act10ns/slack@v1
         env:
@@ -184,7 +184,7 @@ jobs:
   # create one last comment on the github pull request, marking that all the
   # jobs have finished for this commit id.
   end-build-comment:
-    if: ${{ always() }} && ${{ github.ref != 'ref/heads/master' }}
+    if: ${{ always() }} && ${{ github.ref != 'ref/heads/main' }}
     runs-on: ubuntu-latest
     needs: [terragrunt]
     steps:
