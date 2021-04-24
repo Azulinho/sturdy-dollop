@@ -22,7 +22,7 @@ jobs:
       # each job will be posting the result of the terragrunt plan after
       # this comment.
       - name: Comment on PR that we running a new build
-        if: github.ref != 'refs/heads/master'
+        if: ${{ github.ref != 'refs/heads/master' }}
         id: comment-on-job-build-start
         uses: peter-evans/create-or-update-comment@v1
         with:
