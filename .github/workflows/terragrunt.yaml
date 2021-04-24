@@ -58,8 +58,11 @@ jobs:
           # and pass the list of directories, which we will use to invalidate
           # the matrix job if there are not terragrunt related changes.
           dirs="EMPTY$(cat dirs.txt)"
-          echo "::set-output name=dirs::$dirs"
-
+          if [ ! -s dirs.txt ]; then
+            echo "::set-output name=dirs::EMPTY"
+          else
+            echo "::set-output name=dirs::NOT_EMPTY"
+          fi
 
   # terragrunt job
   terragrunt:
