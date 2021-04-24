@@ -162,7 +162,7 @@ jobs:
       # ON PR build only:
       # update the PR with the terragrunt plan output
       - name: Create comment on PR
-        if: ${{  github.ref != 'ref/heads/main' }}
+        if: ${{ github.ref != 'ref/heads/main' && ( success() || failure() ) }}
         id: comment
         uses: peter-evans/create-or-update-comment@v1
         with:
@@ -173,7 +173,7 @@ jobs:
 
       # ON main build only:
       - name: Slack Notification
-        if: ${{ github.ref == 'ref/heads/main' }}
+        if: ${{ github.ref == 'ref/heads/main' && ( success() || failure() ) }}
         id: slack
         uses: act10ns/slack@v1
         env:
@@ -189,7 +189,7 @@ jobs:
   # jobs have finished for this commit id.
   end-build-comment:
     needs: [terragrunt]
-    if: ${{ github.ref != 'ref/heads/main' }}
+    if: ${{ github.ref != 'ref/heads/main' && ( success() || failure() ) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
