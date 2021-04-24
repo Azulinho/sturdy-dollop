@@ -23,7 +23,7 @@ jobs:
       # each job will be posting the result of the terragrunt plan after
       # this comment.
       - name: Comment on PR that we running a new build
-        if: ${{ env.GITHUB_REF != "refs/heads/main" }}
+        if: ${{ env.GITHUB_REF != 'refs/heads/main' }}
         id: comment-on-job-build-start
         uses: peter-evans/create-or-update-comment@v1
         with:
@@ -125,7 +125,7 @@ jobs:
               let rc=$?
             fi
 
-            # set the terragrunt action based on if we are on a main build
+            # set the terragrunt action based on if we are on a Main build
             # or on a PR build
             if [ "${{ env.GITHUB_REF }}" == "ref/heads/main"]; then
               ACTION="apply -auto-approve"
