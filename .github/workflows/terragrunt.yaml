@@ -158,7 +158,7 @@ jobs:
       # ON PR build only:
       # update the PR with the terragrunt plan output
       - name: Create comment on PR
-        if: ${{ always() && github.ref  != "ref/heads/master" }}
+        if: ${{ always() }} && ${{ github.ref != 'ref/heads/master' }}
         id: comment
         uses: peter-evans/create-or-update-comment@v1
         with:
@@ -169,7 +169,7 @@ jobs:
 
       # ON master build only:
       - name: Slack Notification
-        if: ${{ always() && github.ref  == "ref/heads/master" }}
+        if: ${{ always() }} && ${{ github.ref == 'ref/heads/master' }}
         id: slack
         uses: act10ns/slack@v1
         env:
@@ -184,7 +184,7 @@ jobs:
   # create one last comment on the github pull request, marking that all the
   # jobs have finished for this commit id.
   end-build-comment:
-    if: ${{ always() && github.ref  != "ref/heads/master" }}
+    if: ${{ always() }} && ${{ github.ref != 'ref/heads/master' }}
     runs-on: ubuntu-latest
     needs: [terragrunt]
     steps:
