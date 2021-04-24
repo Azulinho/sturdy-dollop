@@ -55,20 +55,20 @@ jobs:
           tf_config="{\"include\":[$tf_config]}"
           echo "::set-output name=matrix::$tf_config"
 
-          # and pass the list of directories, which we will use to invalidate
+          # and pass a flag, which we will use to invalidate
           # the matrix job if there are not terragrunt related changes.
           dirs="EMPTY$(cat dirs.txt)"
-          if [ ! -s dirs.txt ]; then
-            echo "::set-output name=dirs::EMPTY"
+          if [ -s dirs.txt ]; then
+            echo "::set-output name=run::true"
           else
-            echo "::set-output name=dirs::NOT_EMPTY"
+            echo "::set-output name=run::false"
           fi
 
   # terragrunt job
   terragrunt:
-    # only run this job if there are changed terragrunt files.
-    if: ${{ needs.build-matrix.outputs.dirs != 'EMPTY' }}
     needs: [build-matrix]
+    # only run this job if there are changed terragrunt files.
+    if: ${{ needs.build-matrix.outputs.run == 'true' }}
     # we have a custom docker image with terragrunt and other tooling
     runs-on: [self-hosted, linux]
     strategy:
@@ -178,8 +178,8 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         with:
-          status: ${{ needs.apply.job.status }}
-          steps: ${{ toJson(needs.apply.steps) }}
+          status: ${{ needs.terragrunt.job.status }}
+          steps: ${{ toJson(needs.terragrunt.steps) }}
           channel: '#scratch0'
 
 
@@ -187,9 +187,9 @@ jobs:
   # create one last comment on the github pull request, marking that all the
   # jobs have finished for this commit id.
   end-build-comment:
+    needs: [terragrunt]
     if: ${{ github.ref != 'ref/heads/main' }}
     runs-on: ubuntu-latest
-    needs: [terragrunt]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
