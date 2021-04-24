@@ -4,7 +4,8 @@ on:
   pull_request:
     types: [opened, synchronize]
   push:
-    branches: main
+    branches:
+      - main
 
 jobs:
   build-matrix:
@@ -23,7 +24,7 @@ jobs:
       # each job will be posting the result of the terragrunt plan after
       # this comment.
       - name: Comment on PR that we running a new build
-        if: ${{ github.ref != 'refs/heads/main' }}
+        if: ${{ $GITHUB_REF != 'refs/heads/main' }}
         id: comment-on-job-build-start
         uses: peter-evans/create-or-update-comment@v1
         with:
@@ -127,7 +128,7 @@ jobs:
 
             # set the terragrunt action based on if we are on a main build
             # or on a PR build
-            if [ "${{ github.ref }}" == "ref/heads/main"]; then
+            if [ "${{ $GITHUB_REF }}" == "ref/heads/main"]; then
               ACTION="apply -auto-approve"
             else
               ACTION="plan"
@@ -162,7 +163,7 @@ jobs:
       # ON PR build only:
       # update the PR with the terragrunt plan output
       - name: Create comment on PR
-        if: ${{ github.ref != 'ref/heads/main' && ( success() || failure() ) }}
+        if: ${{ $GITHUB_REF != 'ref/heads/main' && ( success() || failure() ) }}
         id: comment
         uses: peter-evans/create-or-update-comment@v1
         with:
@@ -173,7 +174,7 @@ jobs:
 
       # ON main build only:
       - name: Slack Notification
-        if: ${{ github.ref == 'ref/heads/main' && ( success() || failure() ) }}
+        if: ${{ $GITHUB_REF == 'ref/heads/main' && ( success() || failure() ) }}
         id: slack
         uses: act10ns/slack@v1
         env:
@@ -189,7 +190,7 @@ jobs:
   # jobs have finished for this commit id.
   end-build-comment:
     needs: [terragrunt]
-    if: ${{ github.ref != 'ref/heads/main' && ( success() || failure() ) }}
+    if: ${{ $GITHUB_REF != 'ref/heads/main' && ( success() || failure() ) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
