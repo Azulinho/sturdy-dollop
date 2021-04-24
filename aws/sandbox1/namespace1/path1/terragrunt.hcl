@@ -4,7 +4,4 @@ terraform {
   source = "../../../../modules/"
 }
 
-
-
-
 inputs = {}
