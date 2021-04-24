@@ -1,4 +1,5 @@
 name: terragrunt apply
+# do not allow multiple master build workflows running concurrently
 concurrency: master-build
 
 on:
@@ -16,12 +17,19 @@ jobs:
         with:
           fetch-depth: 2
 
+      # build a matrix of jobs to build based on the list of files changed.
+      # each job runs in a particular directory containing a terragrunt.hcl file
       - name: set matrix of build jobs
         id: set-matrix
         run: |
+          # gather the list of change files, and filter for .hcl files only
+          # check if those are not git files being deleted
+          # gather the directory for each file and remove any dups
           git diff --name-only HEAD^ HEAD | grep \.hcl | xargs -i sh -c "test -e {} && echo {}" | xargs -i dirname {} | sort -u > dirs.txt
           tf_config=''
 
+          # build the json payload with all the directories that contain
+          # changed files.
           while IFS= read -r dir
           do
             if [[ -z $tf_config ]]; then
@@ -31,18 +39,27 @@ jobs:
             fi
           done < dirs.txt
 
+          # set the matrix output with the list of all directories to build
           tf_config="{\"include\":[$tf_config]}"
           echo "::set-output name=matrix::$tf_config"
 
+          # and pass the list of directories, which we will use to invalidate
+          # the matrix job if there are not terragrunt related changes.
           dirs="EMPTY$(cat dirs.txt)"
           echo "::set-output name=dirs::$dirs"
 
+  # terragrunt apply job
   apply:
+    # only run this job if there are changed terragrunt files.
     if: ${{ needs.build-matrix.outputs.dirs != 'EMPTY' }}
     needs: [build-matrix]
+    # we have a custom docker image with terragrunt and other tooling
     runs-on: [self-hosted, linux]
     strategy:
+      # for each directory containing terraform changed files we spin up
+      # a new build job
       matrix: ${{fromJson(needs.build-matrix.outputs.matrix)}}
+      # don't kill the jobs as it will cause orphan terraform locks
       fail-fast: false
     steps:
       - name: Checkout
@@ -53,11 +70,12 @@ jobs:
       - name: run terragrunt apply
         id: terragrunt-apply
         env:
+          # contains all the AWS keys for all the envs
           AWS_ACCOUNTS_KEYS: ${{ secrets.AWS_ACCOUNTS_ACCESS_KEYS }}
         run: |
           set -o pipefail +e
-          echo "matrix is: ${{ needs.build-matrix.outputs.matrix }}"
           echo "my job is: ${{ matrix.tf_config }}"
+          # only run terraform if this is a aws/< account >/ change
           if ( echo "${{ matrix.tf_config }}" | grep "aws/" ); then
             cd ${{ matrix.tf_config }}
 
@@ -68,9 +86,15 @@ jobs:
             # retrieve the creds from the env
             export AWS_ACCESS_KEY_ID=`echo $AWS_ACCOUNT_KEYS | grep "$AWS_ACCOUNT_NAME" | cut -f2 -d ":"`
             export AWS_SECRET_ACCESS_KEY=`echo $AWS_ACCOUNT_KEYS | grep "$AWS_ACCOUNT_NAME" | cut -f3 -d ":"`
+
+            # attempt to make tgenv, tfenv friendly to CI
             export TGENV_NO_COLOR=true
             export TFENV_NO_COLOR=true
 
+            # TODO: we don't actually use this on master, should we post it
+            # to slack?
+            # we will save the log for this job, and post it to github as a
+            # comment
             echo "# OUTPUT FOR JOB: ${{matrix.tf_config}}" > log.txt
             echo >> log.txt
             echo >> log.txt
@@ -96,23 +120,21 @@ jobs:
             fi
 
             # https://github.community/t/set-output-truncates-multiline-strings/16852/6
+            # github-actions is just a collection of horrid hacks.
             OUTPUT=$(cat log.txt)
             OUTPUT="${OUTPUT//'%'/'%25'}"
             OUTPUT="${OUTPUT//$'\n'/'%0A'}"
             OUTPUT="${OUTPUT//$'\r'/'%0D'}"
 
             echo "::set-output name=content::$OUTPUT"
-
-            if [ $rc -lt 1 ]; then
-              echo "::set-output name=emoji:: "
-            else
-              echo "::set-output name=emoji::-1"
-            fi
-
             exit $rc
           fi
 
-
+  # I can't get a single job status, because each directory is a job!
+  # I need to run this as a step.
+  # and the message should contain the directory name
+  # and I could hook each failure to its own slack webhook so that messages
+  # get sent to the correct slack env channel
   slack:
     if: ${{ always() }}
     needs: [apply]
