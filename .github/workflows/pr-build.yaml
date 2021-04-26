@@ -171,7 +171,7 @@ jobs:
           fetch-depth: 2
 
       # notify on the PR that we finished the build for this commit
-      - name: Comment on PR that we running a new build
+      - name: Comment on PR that we finished running a new build
         if: ${{ always() }}
         id: comment-on-job-build-end
         uses: peter-evans/create-or-update-comment@v1
