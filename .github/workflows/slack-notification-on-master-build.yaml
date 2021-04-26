@@ -1,0 +1,25 @@
+on:
+  workflow_run:
+    workflows:
+      - terragrunt apply
+    branches:
+      - main
+    types:
+      - completed
+
+jobs:
+  on-sucess:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Slack Notification
+        # when the job is skipped, this slack action blows up as there is
+        # no job.status or steps to pass to the call
+        id: slack
+        uses: act10ns/slack@v1
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        with:
+          status: ${{ github.event.workflow_run.conclusion }}
+          steps: ${{ toJson(github.event.workflow_run.job.apply.steps) }}
+          channel: '#scratch0'

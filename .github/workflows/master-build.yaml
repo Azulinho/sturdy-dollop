@@ -61,6 +61,7 @@ jobs:
 
   # terragrunt apply job
   apply:
+    id: apply
     needs: [build-matrix]
     # only run this job if there are changed terragrunt files.
     if: ${{ needs.build-matrix.outputs.run == 'true' }}
@@ -123,25 +124,20 @@ jobs:
             exit $rc
           fi
 
-  end-build-comment:
-    needs: [apply]
-    if: ${{  needs.apply.job.status != 'cancelled' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: |
-          echo "$GITHUB_CONTEXT"
-
-      - name: Slack Notification
-        # when the job is skipped, this slack action blows up as there is
-        # no job.status or steps to pass to the call
-        id: slack
-        uses: act10ns/slack@v1
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-        with:
-          status: ${{ needs.apply.job.status }}
-          steps: ${{ toJson(needs.apply.steps) }}
-          channel: '#scratch0'
+  # end-build-comment:
+  #   needs: [apply]
+  #   if: ${{  needs.apply.job.status != 'cancelled' }}
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #
+  #     - name: Slack Notification
+  #       # when the job is skipped, this slack action blows up as there is
+  #       # no job.status or steps to pass to the call
+  #       id: slack
+  #       uses: act10ns/slack@v1
+  #       env:
+  #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+  #       with:
+  #         status: ${{ needs.apply.job.status }}
+  #         steps: ${{ toJson(needs.apply.steps) }}
+  #         channel: '#scratch0'
