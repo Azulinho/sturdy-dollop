@@ -18,6 +18,7 @@ jobs:
 
     - name: docker test build
       run: |
+        cd docker/terragrunt-build-runner
         docker build -t my-build \
         --build-arg TERRAGRUNT_VERSION=`cat ../../.terragrunt-version` \
         --build-arg TERRAFORM_VERSION=`cat ../../.terraform-version` \
