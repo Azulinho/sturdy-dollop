@@ -125,7 +125,7 @@ jobs:
 
   end-build-comment:
     needs: [apply]
-    if: ${{  needs.apply.job.status != "skipped") }}
+    if: ${{  needs.apply.job.status != 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - name: Dump GitHub context
