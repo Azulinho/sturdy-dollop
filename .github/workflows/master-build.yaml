@@ -125,7 +125,7 @@ jobs:
 
   end-build-comment:
     needs: [apply]
-    if: ${{ always() }}
+    if: ${{  needs.apply.job.status != "skipped") }}
     runs-on: ubuntu-latest
     steps:
       - name: Dump GitHub context
@@ -137,7 +137,6 @@ jobs:
       - name: Slack Notification
         # when the job is skipped, this slack action blows up as there is
         # no job.status or steps to pass to the call
-        if: needs.apply.job.status != "cancelled"
         id: slack
         uses: act10ns/slack@v1
         env:
@@ -146,4 +145,3 @@ jobs:
           status: ${{ needs.terragrunt-apply.job.status }}
           steps: ${{ toJson(needs.apply.steps) }}
           channel: '#scratch0'
-
