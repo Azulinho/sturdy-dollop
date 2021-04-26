@@ -1,6 +1,6 @@
 name: slack notification on master build
 on:
-  workflow_run:
+  terragrunt_apply:
     workflows:
       - terragrunt apply
     branches:
@@ -9,7 +9,7 @@ on:
       - completed
 
 jobs:
-  on-sucess:
+  slack:
     runs-on: ubuntu-latest
     steps:
       - name: Slack Notification
@@ -18,5 +18,5 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         with:
-          status: ${{ github.event.workflow_run.conclusion }}
+          status: ${{ github.event.terragrunt_apply.conclusion }}
           channel: '#terragrunt'
