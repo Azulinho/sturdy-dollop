@@ -130,6 +130,6 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         with:
-          status: ${{ needs.terragrunt.job.status }}
-          steps: ${{ toJson(needs.terragrunt.steps) }}
+          status: ${{ needs.apply.job.status }}
+          steps: ${{ toJson(needs.apply.steps) }}
           channel: '#scratch0'
