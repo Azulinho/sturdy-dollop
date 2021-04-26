@@ -20,5 +20,4 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         with:
           status: ${{ github.event.workflow_run.conclusion }}
-          #steps: ${{ toJson(github.event.workflow_run.job.apply.steps) }}
           channel: '#scratch0'
