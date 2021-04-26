@@ -7,7 +7,7 @@ on:
     branches: main
 
 jobs:
-  build-matrix:
+  setup-matrix:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -73,15 +73,15 @@ jobs:
 
   # terragrunt job
   terragrunt:
-    needs: [build-matrix]
+    needs: [setup-matrix]
     # only run this job if there are changed terragrunt files.
-    if: ${{ needs.build-matrix.outputs.run == 'true' }}
+    if: ${{ needs.setup-matrix.outputs.run == 'true' }}
     # we have a custom docker image with terragrunt and other tooling
     runs-on: [self-hosted, linux]
     strategy:
       # for each directory containing terraform changed files we spin up
       # a new build job
-      matrix: ${{fromJson(needs.build-matrix.outputs.matrix)}}
+      matrix: ${{fromJson(needs.setup-matrix.outputs.matrix)}}
       # don't kill the jobs as it will cause orphan terraform locks
       fail-fast: false
     steps:
@@ -168,6 +168,10 @@ jobs:
       # ON PR build only:
       # update the PR with the terragrunt plan output
       - name: Create comment on PR
+        # TODO: this is failing after a merge to master
+        # IT ATTEMPTS TO RUN IT
+        #
+        # LOOK INTO WORKFLOW TRIGGERS THAT RUN AFTER A WORKFLOW
         if: ${{ github.ref != 'ref/heads/main' && ( success() || failure() ) }}
         id: comment
         uses: peter-evans/create-or-update-comment@v1
