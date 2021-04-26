@@ -128,10 +128,16 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+
       - name: Slack Notification
         # when the job is skipped, this slack action blows up as there is
         # no job.status or steps to pass to the call
-        if: ${{  success() || failure() }}
+        if: needs.apply.job.status != "cancelled"
         id: slack
         uses: act10ns/slack@v1
         env:
