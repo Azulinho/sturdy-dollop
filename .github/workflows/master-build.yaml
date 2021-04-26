@@ -129,7 +129,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Slack Notification
-        if: ${{ always() }}
+        if: ${{  success() || failure() }}
         id: slack
         uses: act10ns/slack@v1
         env:
