@@ -1,8 +1,10 @@
-name: terragrunt plan
+name: terragrunt apply
+# do not allow multiple master build workflows running concurrently
+concurrency: master-build
 
 on:
-  pull_request:
-    types: [opened, synchronize]
+  push:
+    branches: main
 
 jobs:
   build-matrix:
@@ -15,23 +17,12 @@ jobs:
         with:
           fetch-depth: 2
 
-      # notify on the PR that we are starting a new build for this commit
-      # each job will be posting the result of the terragrunt plan after
-      # this comment.
-      - name: Comment on PR that we running a new build
-        id: comment-on-job-build-start
-        uses: peter-evans/create-or-update-comment@v1
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            # starting build for commit: ${{ github.sha }}
-
       # build a matrix of jobs to build based on the list of files changed.
       # each job runs in a particular directory containing a terragrunt.hcl file
       - name: set matrix of build jobs
         id: set-matrix
         run: |
-          # gather the list of change files, and filter for .hcl files only
+          # gather the list of changed files, and filter for .hcl files only
           # check if those are not git files being deleted
           # gather the directory for each file and remove any dups
           git diff --name-only HEAD^ HEAD | grep \.hcl | xargs -i sh -c "test -e {} && echo {}" | xargs -i dirname {} | sort -u > dirs.txt
@@ -48,6 +39,7 @@ jobs:
             fi
           done < dirs.txt
 
+          # set the matrix output with the list of all directories to build
           tf_config="{\"include\":[$tf_config]}"
           echo "::set-output name=matrix::$tf_config"
 
@@ -57,8 +49,8 @@ jobs:
           echo "::set-output name=dirs::$dirs"
 
 
-  # terragrunt plan job
-  plan:
+  # terragrunt apply job
+  apply:
     # only run this job if there are changed terragrunt files.
     if: ${{ needs.build-matrix.outputs.dirs != 'EMPTY' }}
     needs: [build-matrix]
@@ -76,8 +68,8 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: run terragrunt plan
-        id: terragrunt-plan
+      - name: run terragrunt apply
+        id: terragrunt-apply
         env:
           # contains all the AWS keys for all the envs
           AWS_ACCOUNTS_KEYS: ${{ secrets.AWS_ACCOUNTS_ACCESS_KEYS }}
@@ -100,81 +92,34 @@ jobs:
             export TGENV_NO_COLOR=true
             export TFENV_NO_COLOR=true
 
-            # we will save the log for this job, and post it to github as a
-            # comment
-            echo "# OUTPUT FOR JOB: ${{matrix.tf_config}}" > log.txt
-            echo >> log.txt
-            echo >> log.txt
-
-            # we disabled -e , so that we can fail and still collect the output
-            # from all failed actions
-            tgenv install 2>&1 | tee -a log.txt
+            tgenv install
             let rc=$rc+$?
 
             if [ $rc -lt 1 ]; then
-              tfenv install 2>&1 | tee -a log.txt
+              tfenv install
               let rc=$?
             fi
 
             if [ $rc -lt 1 ]; then
-              terragrunt init -no-color 2>&1 | tee -a log.txt
+              terragrunt init -no-color
               let rc=$?
             fi
 
             if [ $rc -lt 1 ]; then
-              terragrunt plan -no-color 2>&1 | tee -a log.txt
+              terragrunt apply -no-color -auto-approve
               let rc=$?
-            fi
-
-            # https://github.community/t/set-output-truncates-multiline-strings/16852/6
-            # github-actions is just a collection of horrid hacks.
-            OUTPUT=$(cat log.txt)
-            OUTPUT="${OUTPUT//'%'/'%25'}"
-            OUTPUT="${OUTPUT//$'\n'/'%0A'}"
-            OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-
-            echo "::set-output name=content::$OUTPUT"
-
-            # prepare an emoji to be used in github pull request comment
-            # use -1 if the plan failed. this will make looking for errors
-            # a bit easier through the github comments.
-            if [ $rc -lt 1 ]; then
-              echo "::set-output name=emoji:: "
-            else
-              echo "::set-output name=emoji::-1"
             fi
 
             exit $rc
           fi
 
-      # update the PR with the terragrunt plan output
-      - name: Create comment on PR
+      - name: Slack Notification
         if: ${{ always() }}
-        id: comment
-        uses: peter-evans/create-or-update-comment@v1
+        id: slack
+        uses: act10ns/slack@v1
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ${{join(steps.terragrunt-plan.outputs.content, '\n')}}
-          reactions: ${{ steps.terragrunt-plan.outputs.emoji }}
-
-  # create one last comment on the github pull request, marking that all the
-  # jobs have finished for this commit id.
-  end-build-comment:
-    runs-on: ubuntu-latest
-    needs: [plan]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 2
-
-      # notify on the PR that we finished the build for this commit
-      - name: Comment on PR that we running a new build
-        if: ${{ always() }}
-        id: comment-on-job-build-end
-        uses: peter-evans/create-or-update-comment@v1
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            # finished build for commit: ${{ github.sha }}
+          status: ${{ needs.terragrunt.job.status }}
+          steps: ${{ toJson(needs.terragrunt.steps) }}
+          channel: '#scratch0'
