@@ -9,7 +9,7 @@ on:
       - completed
 
 jobs:
-  slack:
+  terragrunt-apply:
     runs-on: ubuntu-latest
     steps:
       - name: Slack Notification
