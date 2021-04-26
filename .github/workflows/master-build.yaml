@@ -17,6 +17,12 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+
       # build a matrix of jobs to build based on the list of files changed.
       # each job runs in a particular directory containing a terragrunt.hcl file
       - name: set matrix of build jobs
@@ -43,17 +49,20 @@ jobs:
           tf_config="{\"include\":[$tf_config]}"
           echo "::set-output name=matrix::$tf_config"
 
-          # and pass the list of directories, which we will use to invalidate
+          # and pass a flag, which we will use to invalidate
           # the matrix job if there are not terragrunt related changes.
           dirs="EMPTY$(cat dirs.txt)"
-          echo "::set-output name=dirs::$dirs"
-
+          if [ -s dirs.txt ]; then
+            echo "::set-output name=run::true"
+          else
+            echo "::set-output name=run::false"
+          fi
 
   # terragrunt apply job
   apply:
-    # only run this job if there are changed terragrunt files.
-    if: ${{ needs.build-matrix.outputs.dirs != 'EMPTY' }}
     needs: [build-matrix]
+    # only run this job if there are changed terragrunt files.
+    if: ${{ needs.build-matrix.outputs.run == 'true' }}
     # we have a custom docker image with terragrunt and other tooling
     runs-on: [self-hosted, linux]
     strategy:
