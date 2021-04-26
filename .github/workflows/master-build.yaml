@@ -123,6 +123,11 @@ jobs:
             exit $rc
           fi
 
+  end-build-comment:
+    needs: [apply]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Slack Notification
         if: ${{ always() }}
         id: slack
@@ -130,6 +135,6 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         with:
-          status: ${{ needs.apply.job.status }}
+          status: ${{ needs.terragrunt-apply.job.status }}
           steps: ${{ toJson(needs.apply.steps) }}
           channel: '#scratch0'
