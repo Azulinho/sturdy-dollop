@@ -6,5 +6,4 @@ terraform {
 
 
 
-
 inputs = {}
