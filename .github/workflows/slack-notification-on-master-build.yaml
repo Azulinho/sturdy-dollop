@@ -19,4 +19,4 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         with:
           status: ${{ github.event.workflow_run.conclusion }}
-          channel: '#scratch0'
+          channel: '#terragrunt'
