@@ -1,3 +1,4 @@
+name: slack notification on master build
 on:
   workflow_run:
     workflows:
