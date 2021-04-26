@@ -129,6 +129,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Slack Notification
+        # when the job is skipped, this slack action blows up as there is
+        # no job.status or steps to pass to the call
         if: ${{  success() || failure() }}
         id: slack
         uses: act10ns/slack@v1
