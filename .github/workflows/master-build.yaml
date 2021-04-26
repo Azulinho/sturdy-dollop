@@ -61,7 +61,6 @@ jobs:
 
   # terragrunt apply job
   apply:
-    id: apply
     needs: [build-matrix]
     # only run this job if there are changed terragrunt files.
     if: ${{ needs.build-matrix.outputs.run == 'true' }}
