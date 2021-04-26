@@ -140,3 +140,4 @@ jobs:
           status: ${{ needs.terragrunt-apply.job.status }}
           steps: ${{ toJson(needs.apply.steps) }}
           channel: '#scratch0'
+
