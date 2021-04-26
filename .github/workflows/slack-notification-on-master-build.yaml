@@ -10,7 +10,6 @@ on:
 jobs:
   on-sucess:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Slack Notification
         # when the job is skipped, this slack action blows up as there is
